@@ -4,9 +4,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
+                git branch: 'master',
                     credentialsId: 'github-key',
-                    url: 'git@github.com:YOUR_ID/project-cicd.git'
+                    url: 'git@github.com:WooJunhyeok/project1-cicd.git'
             }
         }
 
@@ -17,3 +17,4 @@ pipeline {
         }
     }
 }
+
