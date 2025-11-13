@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+	skipDefaultCheckout(true)
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -10,9 +14,11 @@ pipeline {
             }
         }
 
-        stage('Test') {
+        stage('Deploy') {
             steps {
-                echo "Git pull 성공!"
+		sh '''
+                ansible-playbook -i /etc/ansible/hosts deploy.yml
+		'''
             }
         }
     }
