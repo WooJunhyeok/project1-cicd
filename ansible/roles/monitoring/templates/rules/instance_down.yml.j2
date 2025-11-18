@@ -1,0 +1,12 @@
+groups:
+  - name: instance_status
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance Down: {{ $labels.instance }}"
+          description: "{{ $labels.instance }} is not responding for over 1 minute."
+

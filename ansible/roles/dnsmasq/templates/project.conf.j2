@@ -1,0 +1,26 @@
+# dnsmasq configuration
+interface=ens160
+bind-interfaces
+listen-address=127.0.0.1,172.16.6.91
+domain=project-dns.local
+
+# internal record
+address=/was1.com/172.16.6.92
+address=/was2.com/172.16.6.93
+address=/web1.com/172.16.6.94
+address=/lb-1.com/172.16.6.95
+address=/lb-2.com/172.16.6.96
+address=/waf.com/172.16.6.99
+
+address=/db-master.com/172.16.6.141
+address=/db-slave.com/172.16.6.142
+address=/db-os.com/172.16.6.143
+address=/db-bs.com/172.16.6.144
+address=/project-cicd.com/172.16.6.145
+
+# external forwarding
+server=8.8.8.8
+server=1.1.1.1
+
+log-queries
+log-facility=/var/log/dnsmasq.log

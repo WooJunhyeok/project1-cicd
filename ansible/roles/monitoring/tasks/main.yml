@@ -1,0 +1,31 @@
+- name: Ensure monitoring directory exists
+  file:
+    path: /home/soldesk/monitoring
+    state: directory
+    owner: soldesk
+    group: soldesk
+
+- name: Copy Prometheus config file
+  template:
+    src: prometheus.yml.j2
+    dest: /home/soldesk/monitoring/prometheus.yml
+    owner: soldesk
+    group: soldesk
+
+- name: Copy Alertmanager config file
+  template:
+    src: alertmanager.yml.j2
+    dest: /home/soldesk/monitoring/alertmanager.yml
+    owner: soldesk
+    group: soldesk
+
+- name: Copy Docker Compose file
+  template:
+    src: docker-compose.yml.j2
+    dest: /home/soldesk/monitoring/docker-compose.yml
+    owner: soldesk
+    group: soldesk
+
+- name: Start monitoring stack with docker compose
+  command: docker compose -f /home/soldesk/monitoring/docker-compose.yml up -d
+
