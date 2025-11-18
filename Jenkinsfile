@@ -5,6 +5,10 @@ pipeline {
         skipDefaultCheckout(true)
     }
 
+    environment {
+        SLACK_WEBHOOK = credentials('slack-webhook')   // Jenkins Credentials ID
+    }
+
     stages {
 
         stage('Checkout') {
@@ -18,9 +22,28 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                ansible-playbook -i /etc/ansible/hosts /etc/ansible/deploy.yml
+                cd ansible
+                ansible-playbook -i inventory.ini site.yml
                 '''
             }
+        }
+    }
+
+    post {
+        success {
+            sh """
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{\"text\":\"🎉 Jenkins Build SUCCESS - project1-cicd\"}' \
+            $SLACK_WEBHOOK
+            """
+        }
+
+        failure {
+            sh """
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{\"text\":\"❌ Jenkins Build FAILED - project1-cicd\"}' \
+            $SLACK_WEBHOOK
+            """
         }
     }
 }
