@@ -23,7 +23,8 @@ pipeline {
             steps {
                 sh '''
                 cd ansible
-                ansible-playbook -i inventory.ini site.yml
+                ansible-playbook -i inventory.ini site.yml \
+		--extra-vars "slack_webhook_url=$SLACK_WEBHOOK"
                 '''
             }
         }
