@@ -25,3 +25,13 @@ services:
     ports:
       - "9100:9100"
 
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "admin"   # 원하면 Ansible 변수로 바꿔줄 수 있음
+    volumes:
+      - ./grafana:/var/lib/grafana
