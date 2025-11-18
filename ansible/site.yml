@@ -1,0 +1,10 @@
+- hosts: monitoring
+  become: yes
+  roles:
+    - monitoring     # docker-compose 기반 Prometheus + Alertmanager + NodeExporter
+
+- hosts: dns
+  become: yes
+  roles:
+    - dnsmasq        # dnsmasq role
+
