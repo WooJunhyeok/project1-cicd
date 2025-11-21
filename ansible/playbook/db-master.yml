@@ -1,0 +1,7 @@
+# playbook/db-master.yml
+- name: 1. Master DB Setup and Get Replication Info
+  hosts: db-master
+  become: yes
+
+  roles:
+    - role: ../roles/db-master

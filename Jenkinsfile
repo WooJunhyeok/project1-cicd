@@ -6,7 +6,8 @@ pipeline {
     }
 
     environment {
-        SLACK_WEBHOOK = credentials('slack-webhook')   // Jenkins Credentials ID
+        SLACK_WEBHOOK = credentials('slack-webhook')
+        ANSIBLE_HOST_KEY_CHECKING = 'False'
     }
 
     stages {
@@ -19,12 +20,21 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy All (DNS + Monitoring + Jenkins)') {
             steps {
                 sh '''
                 cd ansible
                 ansible-playbook -i inventory.ini site.yml \
-		--extra-vars "slack_webhook_url=$SLACK_WEBHOOK slack_channel=#alert"
+                --extra-vars "slack_webhook_url=$SLACK_WEBHOOK slack_channel=#alerts"
+                '''
+            }
+        }
+
+        stage('Deploy Load Balancer') {
+            steps {
+                sh '''
+                cd ansible
+                ansible-playbook -i inventory.ini playbook/lb-deploy.yml
                 '''
             }
         }

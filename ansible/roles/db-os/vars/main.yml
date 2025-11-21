@@ -1,0 +1,4 @@
+# vars file for db-os
+
+minio_version: "RELEASE.2023-10-25T00-00-00Z"
+

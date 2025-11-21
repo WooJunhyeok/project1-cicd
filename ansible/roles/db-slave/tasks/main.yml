@@ -1,0 +1,81 @@
+# db-slave.yml
+
+- name: Set root password (initial)
+  mysql_user:
+    login_user: root
+    login_password: ""
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    user: root
+    password: "{{ mysql_root_password }}"
+    host_all: yes
+  ignore_errors: yes
+
+- name: Create /root/.my.cnf for MySQL client credentials on Slave
+  copy:
+    dest: /root/.my.cnf
+    content: |
+      [client]
+      user=root
+      password={{ mysql_root_password }}
+      socket=/var/lib/mysql/mysql.sock
+    mode: "0600"
+  become: true
+  when: inventory_hostname == "db-s"  # 슬레이브 서버에서만 실행되도록 설정
+
+- name: Apply slave config
+  template:
+    src: my.cnf.j2
+    dest: "{{ config_file }}"
+  notify: restart mariadb
+
+###########################################################
+# 1) MASTER STATUS JSON 가져오기
+###########################################################
+- name: Read master status file
+  slurp:
+    src: /tmp/master_status.json
+  delegate_to: "{{ master_host }}"
+  register: master_status_file
+  become: false
+  vars:
+    ansible_user: root
+
+###########################################################
+# 2) Base64 → JSON decode
+###########################################################
+- name: Decode JSON
+  set_fact:
+    master_status: "{{ master_status_file.content | b64decode | from_json }}"
+
+- name: Extract master_log_file
+  set_fact:
+    master_log_file: "{{ master_status.log_file }}"
+
+- name: Extract master_log_pos
+  set_fact:
+    master_log_pos: "{{ master_status.log_pos | int }}"
+
+###########################################################
+# 3) CHANGE MASTER TO
+###########################################################
+- name: Configure slave replication
+  mysql_replication:
+    mode: changeprimary
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    master_host: "{{ master_host }}"
+    master_user: "{{ replication_user }}"
+    master_password: "{{ replication_password }}"
+    master_log_file: "{{ master_log_file }}"
+    master_log_pos: "{{ master_log_pos }}"
+
+###########################################################
+# 4) START SLAVE
+###########################################################
+- name: Start slave replication
+  mysql_replication:
+    mode: startreplica  # replication 시작
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock

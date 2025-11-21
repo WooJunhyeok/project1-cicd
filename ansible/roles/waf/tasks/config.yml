@@ -1,0 +1,43 @@
+---
+- name: Deploy Apache Reverse Proxy + WAF configuration
+  copy:
+    dest: /etc/httpd/conf.d/waf.conf
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      <VirtualHost *:80>
+          ServerName {{ waf_ip }}
+
+          SecRuleEngine On
+          ProxyPreserveHost On
+
+          ProxyPass / {{ backend_url }}
+          ProxyPassReverse / {{ backend_url }}
+
+          <Proxy "balancer://mycluster">
+          {% for backend in backend_servers %}
+              BalancerMember {{ backend }}
+          {% endfor %}
+              ProxySet lbmethod=byrequests
+          </Proxy>
+
+          ProxyPass / balancer://mycluster/
+          ProxyPassReverse / balancer://mycluster/
+      </VirtualHost>
+  notify: Restart httpd
+
+- name: Install ModSecurity CRS rules (when available)
+  dnf:
+    name: mod_security_crs
+    state: present
+  ignore_errors: yes
+
+- name: Copy CRS rules to activated_rules directory
+  copy:
+    src: /usr/share/mod_modsecurity_crs/rules/
+    dest: /etc/httpd/modsecurity.d/activated_rules/
+    remote_src: yes
+  ignore_errors: yes
+  notify: Restart httpd
+

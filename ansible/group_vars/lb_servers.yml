@@ -1,0 +1,11 @@
+---
+# Keepalived 공통 설정
+keepalived_vip: "172.16.6.100"
+keepalived_interface: "ens160"     # 네트워크 인터페이스 명
+keepalived_router_id: 51           # VRRP Router ID (두 서버가 같아야 함)
+keepalived_auth_pass: "1234"       # 인증 비밀번호
+
+# Nginx 업스트림(백엔드) 설정
+backend_servers:
+  - "172.16.6.94:8081"
+  - "172.16.6.94:8082"

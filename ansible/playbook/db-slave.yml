@@ -1,0 +1,6 @@
+---
+- name: Configure MariaDB Slave Server
+  hosts: db-slave
+  become: yes
+  roles:
+    - ../roles/db-slave

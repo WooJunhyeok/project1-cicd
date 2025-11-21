@@ -1,0 +1,4 @@
+mysql_packages:
+  - mariadb
+  - mariadb-server
+config_file: "/etc/my.cnf.d/server.cnf"

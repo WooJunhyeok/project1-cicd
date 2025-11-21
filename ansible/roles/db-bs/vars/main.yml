@@ -1,0 +1,3 @@
+---
+backup_dir: "/backup/hrm"
+export_network: "172.16.6.0/24"

@@ -1,0 +1,15 @@
+---
+- name: Install Apache HTTPD and modules
+  dnf:
+    name:
+      - httpd
+      - mod_ssl
+      - mod_security
+    state: present
+
+- name: Ensure httpd is started and enabled
+  systemd:
+    name: httpd
+    state: started
+    enabled: yes
+

@@ -1,0 +1,7 @@
+---
+- name: Setup Apache WAF + Reverse Proxy + Load Balancer
+  hosts: waf
+  become: yes
+  roles:
+    - waf
+

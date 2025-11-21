@@ -1,0 +1,23 @@
+vrrp_instance VI_1 {
+    # state (MASTER or BACKUP)
+    state {{ keepalived_state }}
+    
+    interface {{ keepalived_interface }}
+    
+    virtual_router_id {{ keepalived_router_id }}
+    
+    # 우선순위 (150 or 100)
+    priority {{ keepalived_priority }}
+    
+    advert_int 1
+    
+    authentication {
+        auth_type PASS
+        auth_pass {{ keepalived_auth_pass }}
+    }
+    
+    virtual_ipaddress {
+        # group_vars에서 설정한 VIP
+        {{ keepalived_vip }}/24 dev {{ keepalived_interface }}
+    }
+}

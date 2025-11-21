@@ -1,0 +1,8 @@
+---
+- name: Setup Object Storage Server (MinIO)
+  hosts: db-os
+  become: yes
+
+  roles:
+    - db-os
+

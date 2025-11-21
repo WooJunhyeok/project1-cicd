@@ -1,0 +1,10 @@
+mysql_root_password: "soldesk5."
+replication_user: "repl"
+replication_password: "repl1234"
+server_id: 2
+
+# group name for master
+master_group: "db-master"
+
+# master hostname automatically fetched
+master_host: "{{ hostvars[groups[master_group][0]].ansible_host }}"

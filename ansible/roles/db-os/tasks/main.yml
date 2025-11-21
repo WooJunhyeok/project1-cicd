@@ -1,0 +1,69 @@
+---
+# tasks file for db-os
+
+- name: Stop podman service if present
+  service:
+    name: podman
+    state: stopped
+  ignore_errors: yes
+
+- name: Remove Podman related packages
+  dnf:
+    name:
+      - podman
+      - podman-docker
+    state: absent
+  ignore_errors: yes
+
+- name: Install Docker dependencies
+  dnf:
+    name:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+    state: present
+
+- name: Add Docker CE repo
+  get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+
+- name: Install Docker CE packages
+  dnf:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    state: present
+
+- name: Enable and start docker service
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Create MinIO data directory
+  file:
+    path: /data/minio
+    state: directory
+    owner: jenkins
+    group: docker
+    mode: '0755'
+
+- name: Run MinIO container
+  docker_container:
+    name: minio
+    image: minio/minio
+    state: started
+    restart_policy: always
+    published_ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - "/data/minio:/data"
+    env:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    command: server /data --console-address ":9001"
+    docker_host: "unix:///var/run/docker.sock"
+

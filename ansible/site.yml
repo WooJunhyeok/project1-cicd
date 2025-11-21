@@ -1,10 +1,5 @@
-- hosts: monitoring
-  become: yes
-  roles:
-    - monitoring     # docker-compose 기반 Prometheus + Alertmanager + NodeExporter
-
-- hosts: dns
-  become: yes
-  roles:
-    - dnsmasq        # dnsmasq role
+# ansible/site.yml
+- import_playbook: playbook/dns.yml
+- import_playbook: playbook/monitoring.yml
+- import_playbook: playbook/jenkins.yml
 

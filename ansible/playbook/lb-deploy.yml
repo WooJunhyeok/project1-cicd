@@ -1,0 +1,8 @@
+---
+- name: HA Load Balancer 구축 (Nginx + Keepalived)
+  hosts: lb_servers
+  become: yes   
+  gather_facts: yes
+
+  roles:
+    - role: lb-ha

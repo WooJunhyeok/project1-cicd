@@ -1,0 +1,4 @@
+mysql_root_password: "soldesk5."
+replication_user: "repl"
+replication_password: "repl1234"
+server_id: 1

@@ -1,0 +1,65 @@
+---
+# 1. 필수 패키지 설치 (Nginx, Keepalived)
+- name: Install Nginx and Keepalived
+  dnf:
+    name:
+      - nginx
+      - keepalived
+    state: present
+
+# 2. Nginx 서비스 시작 및 부팅 시 자동 실행 활성화
+- name: Enable and start Nginx service
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+# 3. (선택사항) Firewalld가 켜져 있다면 HTTP 및 VRRP 허용
+# 만약 방화벽을 안 쓰거나 꺼두셨다면 이 부분은 건너뛰어도 됩니다.
+- name: Permit HTTP service in firewalld
+  firewalld:
+    service: http
+    permanent: yes
+    state: enabled
+    immediate: yes
+  ignore_errors: yes  # 방화벽이 없어도 에러 무시
+
+- name: Permit VRRP protocol in firewalld (for Keepalived)
+  firewalld:
+    rich_rule: rule protocol value="vrrp" accept
+    permanent: yes
+    state: enabled
+    immediate: yes
+  ignore_errors: yes
+
+# 4. Nginx LB 설정 파일 배포 (Template -> /etc/nginx/conf.d/hrm-lb.conf)
+- name: Deploy Nginx Load Balancer configuration
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/conf.d/hrm-lb.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Nginx  # 파일이 변경되면 핸들러 호출
+
+# 5. Nginx 문법 검사 (설정이 꼬이면 배포 중단)
+- name: Validate Nginx configuration
+  command: nginx -t
+  changed_when: fals
+
+
+# 6. Keepalived 설정 파일 배포
+- name: Deploy Keepalived configuration
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Keepalived  # 설정이 바뀌면 재시작 핸들러 호출
+
+- name: Enable and start Keepalived service
+  service:
+    name: keepalived
+    state: started
+    enabled: yes

@@ -1,0 +1,58 @@
+---
+- name: Install NFS packages
+  dnf:
+    name: nfs-utils
+    state: present
+
+- name: Create backup directory
+  file:
+    path: "{{ backup_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Configure NFS export
+  copy:
+    dest: /etc/exports
+    content: |
+      {{ backup_dir }} {{ export_network }}(rw,sync,no_root_squash,no_subtree_check)
+      {{ backup_dir }} 127.0.0.1(rw,sync,no_root_squash,no_subtree_check)
+  notify: Reload NFS
+
+- name: Enable & start NFS server
+  systemd:
+    name: nfs-server
+    enabled: yes
+    state: started
+
+- name: Allow NFS services in firewalld
+  firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: yes
+  loop:
+    - nfs
+    - rpc-bind
+    - mountd
+
+- name: Create local mount test directory
+  file:
+    path: /mnt/test
+    state: directory
+
+- name: Mount test (NFS local test)
+  mount:
+    path: /mnt/test
+    src: "127.0.0.1:{{ backup_dir }}"
+    fstype: nfs
+    state: mounted
+
+- name: Create test file on mounted directory
+  copy:
+    dest: /mnt/test/test.txt
+    content: "NFS Test Successful\n"
+
+- name: Unmount test directory
+  mount:
+    path: /mnt/test
+    state: absent

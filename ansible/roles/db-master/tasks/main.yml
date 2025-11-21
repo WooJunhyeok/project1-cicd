@@ -1,0 +1,101 @@
+---
+- name: Install MariaDB packages
+  dnf:
+    name: "{{ mysql_packages }}"
+    state: present
+
+- name: Enable and start MariaDB
+  service:
+    name: mariadb
+    enabled: yes
+    state: started
+
+###########################################################
+# 1) Root 비밀번호 설정
+###########################################################
+- name: Set root password (initial)
+  mysql_user:
+    login_user: root
+    login_password: ""
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    user: root
+    password: "{{ mysql_root_password }}"
+    host_all: yes
+  ignore_errors: yes
+
+###########################################################
+# 2) /root/.my.cnf 설정
+###########################################################
+- name: Create /root/.my.cnf
+  copy:
+    dest: /root/.my.cnf
+    content: |
+      [client]
+      user=root
+      password={{ mysql_root_password }}
+      socket=/var/lib/mysql/mysql.sock
+    mode: "0600"
+
+###########################################################
+# 3) master my.cnf 적용
+###########################################################
+- name: Apply master configuration
+  template:
+    src: my.cnf.j2
+    dest: "{{ config_file }}"
+  notify: restart mariadb
+
+###########################################################
+# 4) replication user 생성
+###########################################################
+- name: Create replication user
+  mysql_user:
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    name: "{{ replication_user }}"
+    password: "{{ replication_password }}"
+    host: "%"
+    priv: "*.*:REPLICATION SLAVE"
+
+###########################################################
+# 5) master status 읽기
+###########################################################
+- name: Get master status
+  command: >
+    mysql --socket=/var/lib/mysql/mysql.sock
+    -u root -p{{ mysql_root_password }}
+    -e "SHOW MASTER STATUS\G"
+  register: master_status_raw
+
+###########################################################
+# 6) master_log_file, master_log_pos 추출
+###########################################################
+- name: Extract master_log_file
+  set_fact:
+    master_log_file: >-
+      {{ master_status_raw.stdout_lines
+         | select('search', 'File:')
+         | map('regex_replace', '.*File:\\s*', '')
+         | list
+         | first }}
+
+- name: Extract master_log_pos
+  set_fact:
+    master_log_pos: "{{ master_status_raw.stdout_lines
+       | select('search', 'Position:')
+       | map('regex_replace', '.*Position:\\s*', '')
+       | list
+       | first | int }}"
+
+###########################################################
+# 7) master status 파일 저장
+###########################################################
+- name: Save master status
+  copy:
+    dest: /tmp/master_status.json
+    content: |
+      {
+        "log_file": "{{ master_log_file }}",
+        "log_pos": "{{ master_log_pos }}"
+      }

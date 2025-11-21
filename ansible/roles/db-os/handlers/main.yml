@@ -1,0 +1,8 @@
+# handlers file for db-os
+
+- name: restart docker
+  systemd:
+    name: docker
+    state: restarted
+    enabled: yes
+

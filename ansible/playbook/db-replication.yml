@@ -1,0 +1,6 @@
+---
+- name: Setup MariaDB Replication (Master → Slave)
+  hosts: db-slave
+  become: yes
+  roles:
+    - db-slave

@@ -1,0 +1,11 @@
+---
+- name: Allow HTTP & HTTPS in firewall
+  firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: yes
+  loop:
+    - http
+    - https
+

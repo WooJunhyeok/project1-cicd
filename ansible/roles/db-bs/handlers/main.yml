@@ -1,0 +1,5 @@
+---
+- name: Reload NFS
+  shell: |
+    exportfs -arv
+    systemctl restart nfs-server

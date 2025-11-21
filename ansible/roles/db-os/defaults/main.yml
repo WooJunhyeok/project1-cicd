@@ -1,0 +1,8 @@
+# defaults file for db-os
+
+minio_user: minioadmin
+minio_password: minioadmin123
+minio_dir: /data/minio
+minio_port: 9000
+minio_console_port: 9001
+

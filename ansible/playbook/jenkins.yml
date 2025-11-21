@@ -1,0 +1,7 @@
+# ansible/playbook/jenkins.yml
+
+- hosts: jenkins
+  become: true
+  roles:
+    - jenkins
+
