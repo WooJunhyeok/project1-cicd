@@ -1,21 +1,26 @@
 ---
-# tasks file for db-os
-
-- name: Stop podman service if present
-  service:
+# -----------------------------
+# Step 1: Podman Clean-Up
+# -----------------------------
+- name: 🐋 Stop podman service if present
+  systemd:
     name: podman
     state: stopped
   ignore_errors: yes
 
-- name: Remove Podman related packages
+- name: 🗑️ Remove Podman related packages
   dnf:
     name:
       - podman
-      - podman-docker
+      - buildah
+      - containers-common
     state: absent
   ignore_errors: yes
 
-- name: Install Docker dependencies
+# -----------------------------
+# Step 2: Install Docker (Official CE Repo)
+# -----------------------------
+- name: 📦 Install docker dependencies
   dnf:
     name:
       - yum-utils
@@ -23,35 +28,40 @@
       - lvm2
     state: present
 
-- name: Add Docker CE repo
-  get_url:
-    url: https://download.docker.com/linux/centos/docker-ce.repo
-    dest: /etc/yum.repos.d/docker-ce.repo
+- name: 📥 Add Docker CE repo
+  command: >
+    dnf config-manager --add-repo
+    https://download.docker.com/linux/centos/docker-ce.repo
+  args:
+    creates: /etc/yum.repos.d/docker-ce.repo
 
-- name: Install Docker CE packages
+- name: 💿 Install Docker CE packages
   dnf:
     name:
       - docker-ce
       - docker-ce-cli
       - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
     state: present
 
-- name: Enable and start docker service
+- name: ▶️ Enable and start docker service
   systemd:
     name: docker
-    state: started
     enabled: yes
+    state: started
 
-- name: Create MinIO data directory
+# -----------------------------
+# Step 3: MinIO Container Setup (Uses variables from defaults/main.yml)
+# -----------------------------
+- name: 📂 Create MinIO data directory
   file:
-    path: /data/minio
+    path: "{{ minio_dir }}"
     state: directory
-    owner: jenkins
-    group: docker
-    mode: '0755'
+    mode: "0755"
 
-- name: Run MinIO container
-  docker_container:
+- name: 🚀 Run MinIO container
+  community.docker.docker_container:
     name: minio
     image: minio/minio
     state: started
@@ -60,10 +70,21 @@
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - "/data/minio:/data"
+      - "{{ minio_dir }}:/data"
     env:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
+      MINIO_ROOT_USER: "{{ minio_user }}"
+      MINIO_ROOT_PASSWORD: "{{ minio_password }}"
     command: server /data --console-address ":9001"
-    docker_host: "unix:///var/run/docker.sock"
 
+# -----------------------------
+# Step 4: Firewall Configuration
+# -----------------------------
+- name: 🛡️ Allow MinIO ports
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop:
+    - 9000/tcp
+    - 9001/tcp

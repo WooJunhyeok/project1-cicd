@@ -29,7 +29,7 @@ pipeline {
                 '''
             }
         }
-
+/*
         stage('Deploy Load Balancer') {
             steps {
                 sh '''
@@ -38,6 +38,7 @@ pipeline {
                 '''
             }
         }
+*/
     }
 
     post {

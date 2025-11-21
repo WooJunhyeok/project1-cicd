@@ -1,8 +1,7 @@
 ---
-- name: Setup Object Storage Server (MinIO)
+- name: MinIO Server Fully Automated Setup
   hosts: db-os
   become: yes
 
   roles:
-    - db-os
-
+    - role: db-os
