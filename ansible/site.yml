@@ -1,5 +1,5 @@
 # ansible/site.yml
+- import_playbook: playbook/db-setup.yml
 - import_playbook: playbook/dns.yml
 - import_playbook: playbook/monitoring.yml
 - import_playbook: playbook/jenkins.yml
-

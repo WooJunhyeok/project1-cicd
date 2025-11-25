@@ -2,3 +2,19 @@
 server-id={{ server_id }}
 log_bin=mysql-bin
 bind-address=0.0.0.0
+
+# 소켓/데이터 경로 통일
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+
+# ===== UTF8MB4 설정 =====
+skip-character-set-client-handshake
+character-set-server=utf8mb4
+collation-server=utf8mb4_general_ci
+
+[client]
+default-character-set=utf8mb4
+socket=/var/lib/mysql/mysql.sock
+
+[mysql]
+default-character-set=utf8mb4

@@ -2,6 +2,7 @@
 - name: 1. Master DB Setup and Get Replication Info
   hosts: db-master
   become: yes
+  gather_facts: yes
 
   roles:
-    - role: ../roles/db-master
+    - ../roles/db-master

@@ -1,4 +1,9 @@
 ---
+- name: Remove old master status file
+  file:
+    path: /tmp/master_status.json
+    state: absent
+
 - name: Install MariaDB packages
   dnf:
     name: "{{ mysql_packages }}"
@@ -9,6 +14,15 @@
     name: mariadb
     enabled: yes
     state: started
+
+###########################################################
+# 0) 기본 server.cnf 삭제
+###########################################################
+- name: Remove default server.cnf to avoid conflict
+  file:
+    path: /etc/my.cnf.d/server.cnf
+    state: absent
+  notify: restart mariadb
 
 ###########################################################
 # 1) Root 비밀번호 설정
@@ -24,7 +38,7 @@
   ignore_errors: yes
 
 ###########################################################
-# 2) /root/.my.cnf 설정
+# 2) /root/.my.cnf 생성
 ###########################################################
 - name: Create /root/.my.cnf
   copy:
@@ -34,6 +48,7 @@
       user=root
       password={{ mysql_root_password }}
       socket=/var/lib/mysql/mysql.sock
+      default-character-set=utf8mb4
     mode: "0600"
 
 ###########################################################
@@ -73,23 +88,14 @@
 ###########################################################
 - name: Extract master_log_file
   set_fact:
-    master_log_file: >-
-      {{ master_status_raw.stdout_lines
-         | select('search', 'File:')
-         | map('regex_replace', '.*File:\\s*', '')
-         | list
-         | first }}
+    master_log_file: "{{ master_status_raw.stdout | regex_search('File:\\s*(\\S+)', '\\1') | first }}"
 
 - name: Extract master_log_pos
   set_fact:
-    master_log_pos: "{{ master_status_raw.stdout_lines
-       | select('search', 'Position:')
-       | map('regex_replace', '.*Position:\\s*', '')
-       | list
-       | first | int }}"
+    master_log_pos: "{{ master_status_raw.stdout | regex_search('Position:\\s*(\\d+)', '\\1') | first }}"
 
 ###########################################################
-# 7) master status 파일 저장
+# 7) master_status.json 저장
 ###########################################################
 - name: Save master status
   copy:
@@ -97,5 +103,12 @@
     content: |
       {
         "log_file": "{{ master_log_file }}",
-        "log_pos": "{{ master_log_pos }}"
+        "log_pos": {{ master_log_pos }}
       }
+    owner: root
+    group: root
+    mode: "0644"
+    force: yes
+
+- debug:
+    msg: "log_file={{ master_log_file }}, log_pos={{ master_log_pos }}"

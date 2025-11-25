@@ -1,0 +1,12 @@
+---
+- name: Setup Master DB
+  hosts: db-master
+  become: yes
+  roles:
+    - db-master
+
+- name: Setup Slave DB
+  hosts: db-slave
+  become: yes
+  roles:
+    - db-slave

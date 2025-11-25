@@ -2,12 +2,6 @@
 # -----------------------------
 # Step 1: Podman Clean-Up
 # -----------------------------
-- name: 🐋 Stop podman service if present
-  systemd:
-    name: podman
-    state: stopped
-  ignore_errors: yes
-
 - name: 🗑️ Remove Podman related packages
   dnf:
     name:
@@ -45,12 +39,26 @@
       - docker-compose-plugin
     state: present
 
-- name: ▶️ Enable and start docker service
+- name: ▶️ Ensure start docker service is enabled
   systemd:
     name: docker
     enabled: yes
     state: started
+  notify: Restart Docker Service
 
+- name: 🐍 Install Python Docker SDK
+  ansible.builtin.pip:
+    name: docker
+    state: present
+    executable: pip3      
+
+- meta: reset_connection
+
+- name: 🔁 Force handler execution to restart Docker
+  meta: flush_handlers
+
+- meta: reset_connection
+      
 # -----------------------------
 # Step 3: MinIO Container Setup (Uses variables from defaults/main.yml)
 # -----------------------------
@@ -61,21 +69,27 @@
     mode: "0755"
 
 - name: 🚀 Run MinIO container
-  community.docker.docker_container:
-    name: minio
-    image: minio/minio
-    state: started
-    restart_policy: always
-    published_ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - "{{ minio_dir }}:/data"
-    env:
-      MINIO_ROOT_USER: "{{ minio_user }}"
-      MINIO_ROOT_PASSWORD: "{{ minio_password }}"
-    command: server /data --console-address ":9001"
+  ansible.builtin.shell: |
+    # ---------------------------------------------
+    # ✅ 추가: 같은 이름의 컨테이너를 강제로 삭제합니다.
+    # || true를 사용하여 해당 컨테이너가 없어도 실패하지 않도록 합니다.
+    docker rm -f minio || true
 
+    # MinIO 컨테이너를 -d 옵션으로 실행합니다.
+    docker run -d \
+      --name minio \
+      --restart always \
+      -p 9000:9000 \
+      -p 9001:9001 \
+      -v {{ minio_dir }}:/data \
+      -e MINIO_ROOT_USER="{{ minio_user }}" \
+      -e MINIO_ROOT_PASSWORD="{{ minio_password }}" \
+      minio/minio \
+      server /data --console-address ":9001"
+  register: minio_run_result
+  # RC 0이 아닌 경우에만 실패로 간주합니다.
+  failed_when: minio_run_result.rc != 0
+  changed_when: true
 # -----------------------------
 # Step 4: Firewall Configuration
 # -----------------------------
@@ -88,3 +102,10 @@
   loop:
     - 9000/tcp
     - 9001/tcp
+# -----------------------------
+# Step 5: 방화벽 최종 적용 확인
+# -----------------------------
+- name: 🔄 Restart firewalld service to ensure all ports are applied
+  ansible.builtin.systemd:
+    name: firewalld
+    state: restarted

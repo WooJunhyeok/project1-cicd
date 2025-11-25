@@ -1,6 +1,10 @@
 ---
 - name: Configure MariaDB Slave Server
   hosts: db-slave
+  remote_user: root
   become: yes
+  become_method: sudo
+  gather_facts: yes
+
   roles:
     - ../roles/db-slave

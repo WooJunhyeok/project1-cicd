@@ -1,7 +1,16 @@
----
-- name: MinIO Server Fully Automated Setup
+# /var/lib/jenkins/project-cicd/ansible/playbook/db-os.yml 수정
+
+- name: MinIO Server Setup via DB-OS Role
   hosts: db-os
   become: yes
-
+  
+  pre_tasks:
+    - name: 🐍 Set explicit Python interpreter path to match pip3 environment
+      ansible.builtin.set_fact:
+        # ✅ 변경: Python 3.9 버전을 명시하여 SDK가 설치된 환경을 강제합니다.
+        ansible_python_interpreter: /usr/bin/python3.9 
+        # *만약 실패하면, 이 경로를 /usr/bin/python3 로 다시 되돌리거나
+        # /usr/local/bin/python3.9 와 같은 다른 경로를 시도해야 합니다.
+  
   roles:
     - role: db-os
