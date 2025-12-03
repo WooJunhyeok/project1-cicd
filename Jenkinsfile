@@ -20,7 +20,7 @@ pipeline {
             }
         }
 
-        stage('Deploy All (DNS + Monitoring + Jenkins)') {
+        stage('Deploy All (All Infra CICD)') {
             steps {
                 sh '''
                 cd ansible
