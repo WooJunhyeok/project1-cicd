@@ -12,18 +12,9 @@
           SecRuleEngine On
           ProxyPreserveHost On
 
-          ProxyPass / {{ backend_url }}
-          ProxyPassReverse / {{ backend_url }}
+          ProxyPass / http://172.16.6.100/
+          ProxyPassReverse / http://172.16.6.100/
 
-          <Proxy "balancer://mycluster">
-          {% for backend in backend_servers %}
-              BalancerMember {{ backend }}
-          {% endfor %}
-              ProxySet lbmethod=byrequests
-          </Proxy>
-
-          ProxyPass / balancer://mycluster/
-          ProxyPassReverse / balancer://mycluster/
       </VirtualHost>
   notify: Restart httpd
 

@@ -31,7 +31,8 @@
 - name: Wait for Jenkins to create initial password
   wait_for:
     path: /var/lib/jenkins/secrets/initialAdminPassword
-    timeout: 60
+    timeout: 100
+  when: not ansible_check_mode
 
 - name: Read initial Jenkins admin password
   slurp:

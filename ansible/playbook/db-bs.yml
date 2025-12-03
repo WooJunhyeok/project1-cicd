@@ -1,6 +1,6 @@
 ---
 - name: Configure MariaDB Master Server
-  hosts: db-master
+  hosts: db-bs
   become: yes
   roles:
-    - ../roles/db-master
+    - ../roles/db-bs

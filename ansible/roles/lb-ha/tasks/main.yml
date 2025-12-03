@@ -15,7 +15,6 @@
     enabled: yes
 
 # 3. (선택사항) Firewalld가 켜져 있다면 HTTP 및 VRRP 허용
-# 만약 방화벽을 안 쓰거나 꺼두셨다면 이 부분은 건너뛰어도 됩니다.
 - name: Permit HTTP service in firewalld
   firewalld:
     service: http
@@ -42,10 +41,10 @@
     mode: '0644'
   notify: Restart Nginx  # 파일이 변경되면 핸들러 호출
 
-# 5. Nginx 문법 검사 (설정이 꼬이면 배포 중단)
+# 5. Nginx 문법 
 - name: Validate Nginx configuration
   command: nginx -t
-  changed_when: fals
+  changed_when: false
 
 
 # 6. Keepalived 설정 파일 배포
@@ -56,7 +55,7 @@
     owner: root
     group: root
     mode: '0644'
-  notify: Restart Keepalived  # 설정이 바뀌면 재시작 핸들러 호출
+  notify: Restart Keepalived  
 
 - name: Enable and start Keepalived service
   service:
