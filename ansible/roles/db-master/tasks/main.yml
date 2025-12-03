@@ -1,8 +1,8 @@
 ---
-- name: Remove old master status file
-  file:
-    path: /tmp/master_status.json
-    state: absent
+#- name: Remove old master status file
+#  file:
+#    path: /tmp/master_status.json
+#    state: absent
 
 - name: Install MariaDB packages
   dnf:
@@ -72,7 +72,7 @@
     password: "{{ replication_password }}"
     host: "%"
     priv: "*.*:REPLICATION SLAVE"
-
+      
 ###########################################################
 # 5) master status 읽기
 ###########################################################
@@ -82,6 +82,7 @@
     -u root -p{{ mysql_root_password }}
     -e "SHOW MASTER STATUS\G"
   register: master_status_raw
+  when: not ansible_check_mode
 
 ###########################################################
 # 6) master_log_file, master_log_pos 추출
@@ -89,26 +90,39 @@
 - name: Extract master_log_file
   set_fact:
     master_log_file: "{{ master_status_raw.stdout | regex_search('File:\\s*(\\S+)', '\\1') | first }}"
+  when: not ansible_check_mode
 
 - name: Extract master_log_pos
   set_fact:
     master_log_pos: "{{ master_status_raw.stdout | regex_search('Position:\\s*(\\d+)', '\\1') | first }}"
+  when: not ansible_check_mode
 
 ###########################################################
 # 7) master_status.json 저장
 ###########################################################
-- name: Save master status
-  copy:
-    dest: /tmp/master_status.json
-    content: |
-      {
-        "log_file": "{{ master_log_file }}",
-        "log_pos": {{ master_log_pos }}
-      }
-    owner: root
-    group: root
-    mode: "0644"
-    force: yes
+#- name: Save master status
+#  copy:
+#    dest: /tmp/master_status.json
+#    content: |
+#      {
+#        "log_file": "{{ master_log_file }}",
+#        "log_pos": {{ master_log_pos }}
+#      }
+#    owner: root
+#    group: root
+#    mode: "0644"
+#    force: yes
+
+#
+# 8) db-master에서 hostvars로 값 저장
+#
+- name: Set master status facts globally
+  set_fact:
+    replication_master_log_file: "{{ master_log_file }}"
+    replication_master_log_pos: "{{ master_log_pos }}"
+  delegate_facts: true
+  when: not ansible_check_mode
 
 - debug:
     msg: "log_file={{ master_log_file }}, log_pos={{ master_log_pos }}"
+  when: not ansible_check_mode

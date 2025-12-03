@@ -70,32 +70,34 @@
   ignore_errors: yes
 
 ##############################################################
-# 5) MASTER STATUS JSON 읽기
+# 5) MASTER STATUS JSON 읽기 (JSON 방식은 사용하지 않음)
+#    - db-master에서 master_status.json을 생성하지 않고
+#      hostvars로 값을 전달하는 방식으로 통일함.
 ##############################################################
-- name: Read master status file
-  slurp:
-    src: /tmp/master_status.json
-  delegate_to: "{{ master_host }}"
-  vars:
-    ansible_user: root
-    ansible_password: "{{ mysql_root_password }}"
-    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-  register: master_status_file
+#- name: Read master status file
+#  slurp:
+#    src: /tmp/master_status.json
+#  delegate_to: "{{ master_host }}"
+#  vars:
+#    ansible_user: root
+#    ansible_password: "{{ mysql_root_password }}"
+#    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+#  register: master_status_file
 
 ##############################################################
-# 6) MASTER STATUS 파싱
+# 6) MASTER STATUS 파싱 (hostvars 방식으로 통일했기 때문에 불필요)
 ##############################################################
-- name: Decode JSON
-  set_fact:
-    master_status: "{{ master_status_file.content | b64decode | from_json }}"
+#- name: Decode JSON
+#  set_fact:
+#    master_status: "{{ master_status_file.content | b64decode | from_json }}"
 
-- name: Extract master_log_file
-  set_fact:
-    master_log_file: "{{ master_status.log_file }}"
+#- name: Extract master_log_file
+#  set_fact:
+#    master_log_file: "{{ master_status.log_file }}"
 
-- name: Extract master_log_pos
-  set_fact:
-    master_log_pos: "{{ master_status.log_pos | int }}"
+#- name: Extract master_log_pos
+#  set_fact:
+#    master_log_pos: "{{ master_status.log_pos | int }}"
 
 ##############################################################
 # 7) CHANGE MASTER TO
@@ -109,8 +111,12 @@
     master_host: "{{ master_host }}"
     master_user: "{{ replication_user }}"
     master_password: "{{ replication_password }}"
-    master_log_file: "{{ master_log_file }}"
-    master_log_pos: "{{ master_log_pos }}"
+    master_log_file: "{{ hostvars[groups['db-master'][0]]['replication_master_log_file'] }}"
+    master_log_pos: "{{ hostvars[groups['db-master'][0]]['replication_master_log_pos'] }}"
+      #master_log_file: "{{ hostvars['db-m'].replication_master_log_file }}"
+      #master_log_pos: "{{ hostvars['db-m'].replication_master_log_pos }}"
+      #    master_log_file: "{{ master_log_file }}"
+      #    master_log_pos: "{{ master_log_pos }}"
 
 ##############################################################
 # 8) START SLAVE
@@ -123,5 +129,8 @@
     login_unix_socket: /var/lib/mysql/mysql.sock
 
 # Optional: Debug
+# Optional: Debug
 - debug:
-    msg: "log_file={{ master_log_file }}, log_pos={{ master_log_pos }}"
+    msg: "log_file={{ hostvars[groups['db-master'][0]]['replication_master_log_file'] }}, log_pos={{ hostvars[groups['db-master'][0]]['replication_master_log_pos'] }}"
+      #- debug:
+      # msg: "log_file={{ master_log_file }}, log_pos={{ master_log_pos }}"

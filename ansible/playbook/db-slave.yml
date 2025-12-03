@@ -1,4 +1,7 @@
 ---
+- name: gather-facts db-master
+  hosts: db-master
+
 - name: Configure MariaDB Slave Server
   hosts: db-slave
   remote_user: root
