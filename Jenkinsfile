@@ -60,3 +60,5 @@ pipeline {
     }
 }
 
+echo "TEST WEBHOOK TRIGGER $(date)"
+
