@@ -60,12 +60,4 @@ pipeline {
     }
 }
 
-stage('Test Webhook') {
-    steps {
-        sh '''
-          echo "TEST WEBHOOK TRIGGER $(date)"
-        '''
-    }
-}
-
 
