@@ -30,7 +30,7 @@ pipeline {
             }
         }
 /*
-        stage('Deploy Load Balancer') {
+        stage('Deploy LB') {
             steps {
                 sh '''
                 cd ansible
